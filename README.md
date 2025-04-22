@@ -8,6 +8,8 @@
 
 # Mini Pupper ROS 2 Humble
 
+> This project is based on [mangdangroboticsclub/mini_pupper_ros](https://github.com/mangdangroboticsclub/mini_pupper_ros).
+
 Make sure the bsp package is installed to your pupper before installing this repositiory if you are not using a pre-built image to install this repository. 
 Please refer to [bsp for mini pupper 2](https://github.com/mangdangroboticsclub/mini_pupper_2_bsp) or [bsp for mini pupper](https://github.com/mangdangroboticsclub/mini_pupper_bsp) according to your model.
 
