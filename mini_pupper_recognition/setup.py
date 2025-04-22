@@ -26,7 +26,8 @@ setup(
             'cloud_line_following_node=mini_pupper_recognition.cloud_line_following_node:main',
             'line_detection_node=mini_pupper_recognition.line_detection_node:main',
             'pid_line_following_node=mini_pupper_recognition.pid_line_following_node:main',
-            'normal_line_following_node=mini_pupper_recognition.normal_line_following_node:main'
+            'normal_line_following_node=mini_pupper_recognition.normal_line_following_node:main',
+            'facenet_face_detection_node=mini_pupper_recognition.facenet_face_detection_node:main',
         ]
     }
 )
