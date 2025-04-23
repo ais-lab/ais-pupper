@@ -21,6 +21,7 @@ ament_target_dependencies(
   "rqt_image_overlay_layer"
   "vision_msgs"
 )
+pluginlib_export_plugin_description_file(rqt_image_overlay_layer plugins.xml)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
