@@ -72,20 +72,14 @@ class FacenetFaceDetectionNode(Node):
                 detection.results.append(hypothesis)
                 detection_array.detections.append(detection)
 
-                # Draw the bounding box on the image if debug is enabled
-                if self.get_parameter('debug').value:
-                    cv2.rectangle(cv_img, 
-                                  (int(face[0]), int(face[1])),
-                                  (int(face[2]), int(face[3])),
-                                  (0, 255, 0), 2)
+                
+        else:
+            detection_array.detections = []
         
         if self.get_parameter('debug').value:
             # Convert the image back to ROS format and publish it
             debug_image = self.bridge.cv2_to_imgmsg(cv_img, encoding='bgr8')
             self.debug_publisher_.publish(debug_image)
-                
-        else:
-            detection_array.detections = []
         
         self.box_publisher_.publish(detection_array)
         
