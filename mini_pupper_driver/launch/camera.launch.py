@@ -37,6 +37,8 @@ def generate_launch_description():
             name='v4l2_camera',
             output='screen',
             parameters=[
-                {'output_encoding': output_encoding}],
+                {'output_encoding': output_encoding},
+                {'image_size': [320, 240]},
+                ],
         ),
     ])
