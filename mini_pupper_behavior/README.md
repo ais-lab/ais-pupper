@@ -27,7 +27,7 @@ ros2 launch mini_pupper_behavior behavior.launch.py
 ```sh
 # terminal 2
 source ~/ros2_ws/install/setup.bash
-ros2 run mini_pupper_behavior behavior_client.py
+ros2 run mini_pupper_behavior behavior_client
 ```
 ### How to modify
 
