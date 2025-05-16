@@ -20,7 +20,7 @@ class MiniPupperBehaviorService(Node):
         self.vel_publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
         self.pose_publisher_ = self.create_publisher(Pose,
                                                      'reference_body_pose', 10)
-        self.interval = 1  # seconds
+        self.interval = 0.3  # seconds
 
     def _publish_velocity(self, linear_x=0.0, linear_y=0.0, angular_z=0.0):
         velocity_cmd = Twist()
@@ -75,9 +75,9 @@ class MiniPupperBehaviorService(Node):
         elif command == 'look_middle':
             self._publish_pose(euler_angles=(0.0, 0.0, 0.0))
         elif command == 'shift_left':
-            self._publish_pose(euler_angles=(-0.5, 0.0, 0.0))
+            self._publish_pose(euler_angles=(-0.3, 0.0, 0.0))
         elif command == 'shift_right':
-            self._publish_pose(euler_angles=(0.5, 0.0, 0.0))
+            self._publish_pose(euler_angles=(0.3, 0.0, 0.0))
         elif command == 'stay':
             time.sleep(self.interval)  # Do nothing
         else:

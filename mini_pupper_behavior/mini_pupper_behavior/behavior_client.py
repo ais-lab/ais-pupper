@@ -13,7 +13,27 @@ class MiniPupperBehaviorClientAsync(Node):
         while not self.behavior_cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
 
-        self.move_commands = ['look_up', 'look_down', 'look_left', 'look_right', 'look_middle',]
+        yes= ['look_up',
+              'look_middle',
+              'look_up',
+              'look_middle']
+        
+        no= ['look_right',
+             'look_left',
+             'look_right',
+             'look_middle']
+        
+        shake= ['shift_left',
+                'shift_right',
+                'shift_left',
+                'shift_right',
+                'look_middle']
+        bow= ['look_down',
+              'stay',
+              'stay',
+              'look_middle']
+        
+        self.move_commands = ['stay'] + yes + ['stay'] + no + ['stay'] + shake + ['stay'] + bow + ['stay']
         # self.move_commands = ['move_down']
 
 
@@ -28,6 +48,8 @@ class MiniPupperBehaviorClientAsync(Node):
         # look_right: the robot will look right
         # look_middle: the robot will return to the default standing posture
         # stay: the robot will keep the last command
+        # shift_left: the robot will shift to the left
+        # shift_right: the robot will shift to the right
 
     def send_move_request(self, move_command):
         req = BehaviorCommand.Request()
