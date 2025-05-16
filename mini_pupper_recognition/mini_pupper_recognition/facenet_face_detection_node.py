@@ -1,5 +1,5 @@
 from facenet_pytorch import MTCNN
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 from rclpy.node import Node
 from vision_msgs.msg import Detection2D, Detection2DArray, ObjectHypothesisWithPose
 import torch
@@ -19,7 +19,7 @@ class FacenetFaceDetectionNode(Node):
         # Load the pre-trained FaceNet model
         super().__init__('facenet_face_detection_node')
         self.declare_parameter('debug', False)
-        self.sub = self.create_subscription(Image, '/image_raw', self.detect_faces, 10)
+        self.sub = self.create_subscription(CompressedImage, '/image_raw/compressed', self.detect_faces, 10)
         self.box_publisher_ = self.create_publisher(Detection2DArray, 'detected_faces', 10)
         if self.get_parameter('debug').value:
             self.debug_publisher_ = self.create_publisher(Image, '/detected_faces/debug', 10)
@@ -46,7 +46,15 @@ class FacenetFaceDetectionNode(Node):
         # Convert the image to RGB format
         # import pdb; pdb.set_trace()
         self.bridge = CvBridge()
-        cv_img = self.bridge.imgmsg_to_cv2(image, 'bgr8')
+        try:
+            # Convert the ROS image to OpenCV format
+            if isinstance(image, CompressedImage):
+                cv_img = self.bridge.compressed_imgmsg_to_cv2(image, 'bgr8')
+            else:
+                cv_img = self.bridge.imgmsg_to_cv2(image, 'bgr8')
+        except Exception as e:
+            self.get_logger().error(f"Error converting image: {e}")
+            return
         image_rgb = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         # Detect faces
         face_detected, probs = self.model.detect(image_rgb)
