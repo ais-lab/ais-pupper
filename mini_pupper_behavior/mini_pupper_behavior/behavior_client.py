@@ -34,8 +34,6 @@ class MiniPupperBehaviorClientAsync(Node):
               'look_middle']
         
         self.move_commands = ['stay'] + yes + ['stay'] + no + ['stay'] + shake + ['stay'] + bow + ['stay']
-        # self.move_commands = ['move_down']
-
 
         # there are 10 commands you can choose:
         # move_forward: the robot will move forward
