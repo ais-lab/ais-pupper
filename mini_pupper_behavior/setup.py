@@ -25,7 +25,8 @@ setup(
         'console_scripts': [
             'behavior_server = mini_pupper_behavior.behavior_server:main',
             'behavior_client = mini_pupper_behavior.behavior_client:main',
-            'pose_controller = mini_pupper_behavior.pose_controller:main'
+            'pose_controller = mini_pupper_behavior.pose_controller:main',
+            'detect_face = mini_pupper_behavior.detect_face:main',
         ],
     },
 )
