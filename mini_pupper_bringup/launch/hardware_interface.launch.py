@@ -44,6 +44,11 @@ def generate_launch_description():
         name='has_camera',
         description='if the robot has camera module'
     )
+    has_display = LaunchConfiguration('has_display')
+    has_display_launch_arg = DeclareLaunchArgument(
+        name='has_display',
+        description='if the robot has display module'
+    )
 
     lidar_port = LaunchConfiguration('lidar_port')
     lidar_port_launch_arg = DeclareLaunchArgument(
@@ -66,12 +71,16 @@ def generate_launch_description():
     camera_launch_path = PathJoinSubstitution(
         [driver_package, 'launch', 'camera.launch.py']
     )
+    display_launch_path = PathJoinSubstitution(
+        [driver_package, 'launch', 'display_interface.launch.py']
+    )
 
     return LaunchDescription([
         has_lidar_launch_arg,
         has_imu_launch_arg,
         lidar_port_launch_arg,
         has_camera_launch_arg,
+        has_display_launch_arg,
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(servos_launch_path)
         ),
@@ -87,5 +96,9 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(camera_launch_path),
             condition=IfCondition(has_camera)
-        )
+        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(display_launch_path),
+            condition=IfCondition(has_display)
+        ),
     ])

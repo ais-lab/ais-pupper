@@ -42,6 +42,8 @@ def get_config():
     sensors_config.setdefault('imu', False)
     sensors_config.setdefault('camera', False)
 
+    modules_config = configuration.get('modules', {})
+    modules_config.setdefault('display', False)
     ports_config = configuration.get('ports', {})
 
     return sensors_config, ports_config
@@ -58,6 +60,7 @@ def generate_launch_description():
     has_imu = str(sensors_config['imu'])
     has_camera = str(sensors_config['camera'])
     lidar_port = ports_config['lidar']
+    has_display = str(ports_config.get('display', False))
 
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_sim_time_launch_arg = DeclareLaunchArgument(
@@ -93,7 +96,8 @@ def generate_launch_description():
             'has_lidar': has_lidar,
             'has_imu': has_imu,
             'has_camera': has_camera,
-            'lidar_port': lidar_port
+            'lidar_port': lidar_port,
+            'has_display': has_display
         }.items()
     )
 
