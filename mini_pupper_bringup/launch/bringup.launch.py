@@ -122,11 +122,22 @@ def generate_launch_description():
         }.items()
     )
 
+    start_face_launch_path = PathJoinSubstitution(
+        [bringup_package, 'launch', 'show_face_start.launch.py']
+    )
+    start_face_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(start_face_launch_path),
+        launch_arguments={
+            'media_file': os.path.join(bringup_package, 'robot_state_folder', 'logo.png')
+        }.items()
+    )
+
     return LaunchDescription([
         use_sim_time_launch_arg,
         hardware_connected_launch_arg,
         description_launch,
         hardware_interface_launch,
         champ_controllers_launch,
-        ekf_localization_launch
+        ekf_localization_launch,
+        start_face_launch,
     ])
