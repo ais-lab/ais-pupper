@@ -33,6 +33,7 @@ def get_config():
     bringup_package = get_package_share_directory('mini_pupper_bringup')
     config_file_name = ROBOT_MODEL + '.yaml'
     config_file_path = os.path.join(bringup_package, 'config', config_file_name)
+    
 
     with open(config_file_path, 'r') as f:
         configuration = yaml.safe_load(f)
@@ -52,6 +53,10 @@ def get_config():
 def generate_launch_description():
     bringup_package = FindPackageShare('mini_pupper_bringup')
     description_package = FindPackageShare('mini_pupper_description')
+    bringup_package_path = get_package_share_directory('mini_pupper_bringup')
+    start_face_file_path = os.path.join(
+        bringup_package_path, 'robot_state_folder', 'logo.png'
+    )
 
     sensors_config, ports_config = get_config()
 
@@ -128,7 +133,7 @@ def generate_launch_description():
     start_face_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(start_face_launch_path),
         launch_arguments={
-            'media_file': os.path.join(bringup_package, 'robot_state_folder', 'logo.png')
+            'media_file': start_face_file_path
         }.items()
     )
 
