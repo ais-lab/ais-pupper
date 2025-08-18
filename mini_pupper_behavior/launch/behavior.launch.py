@@ -21,8 +21,15 @@ def generate_launch_description():
             executable="pose_controller",
             name="pose_controller",
         )
+    detect_face_node = Node(
+            package="mini_pupper_behavior",
+            namespace="",
+            executable="detect_face",
+            name="detect_face",
+        )
     return LaunchDescription([
         behavior_server_node,
-        # behavior_client_node, 
-        pose_controller_node
+        behavior_client_node,
+        pose_controller_node,
+        # detect_face_node
     ])

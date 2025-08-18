@@ -14,6 +14,7 @@ find_package(rosidl_default_generators REQUIRED)
 # find_package(<dependency> REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "action/BehaviorCommand.action"
   "srv/BehaviorCommand.srv"
   "srv/DanceCommand.srv"
   "srv/PlayMusic.srv"

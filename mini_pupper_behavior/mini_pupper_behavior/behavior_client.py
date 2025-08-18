@@ -2,71 +2,81 @@
 
 import rclpy
 from rclpy.node import Node
-from mini_pupper_interfaces.srv import BehaviorCommand
+from rclpy.action import ActionClient
+from mini_pupper_interfaces.action import BehaviorCommand
 import time
 
-class MiniPupperBehaviorClientAsync(Node):
+class MiniPupperBehaviorClient(Node):
     def __init__(self):
-        super().__init__('mini_pupper_behavior_client_async')
-        self.behavior_cli = self.create_client(BehaviorCommand, 'behavior_command')
+        super().__init__('mini_pupper_behavior_client')
+        self.behavior_action_cli = ActionClient(self, BehaviorCommand, 'behavior_command')
+        self.sequence_completed = False  # Add completion flag
 
-        while not self.behavior_cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-
-        yes= ['look_up',
-              'look_middle',
-              'look_up',
-              'look_middle']
-        
-        no= ['look_right',
-             'look_left',
-             'look_right',
-             'look_middle']
-        
-        shake= ['shift_left',
-                'shift_right',
-                'shift_left',
-                'shift_right',
-                'look_middle']
-        bow= ['look_down',
-              'stay',
-              'stay',
-              'look_middle']
-        
-        self.move_commands = ['stay'] + yes + ['stay'] + no + ['stay'] + shake + ['stay'] + bow + ['stay']
-
-        # there are 10 commands you can choose:
-        # move_forward: the robot will move forward
-        # move_backward: the robot will move backward
-        # move_left: the robot will move to the left
-        # move_right: the robot will move to the right
-        # look_up: the robot will look up
-        # look_down: the robot will look down
-        # look_left: the robot will look left
-        # look_right: the robot will look right
-        # look_middle: the robot will return to the default standing posture
-        # stay: the robot will keep the last command
-        # shift_left: the robot will shift to the left
-        # shift_right: the robot will shift to the right
+        # Define test sequences - Test state detection and transitions
+        # from these choices: 
+        # sit, stand, lay, pause, breathing, move_forward, move_backward, move_left, 
+        # move_right, turn_left, turn_right, yes, no, shake, bow,
+        # look_up, look_down, look_left, look_right, move_up, move_down, shift_left, shift_right
+        self.test_commands = [
+            'default',
+            'look_left',
+            'look_right',
+        ]
 
     def send_move_request(self, move_command):
-        req = BehaviorCommand.Request()
-        req.data = move_command
-        future = self.behavior_cli.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
-        return future.result()
-    
+        goal_msg = BehaviorCommand.Goal()
+        goal_msg.data = move_command
+
+        self.behavior_action_cli.wait_for_server()
+        self.sequence_completed = False  # Reset completion flag
+        self._send_goal_future = self.behavior_action_cli.send_goal_async(
+            goal_msg, 
+            feedback_callback=self.feedback_callback
+        )
+        self._send_goal_future.add_done_callback(self.goal_response_callback)
+        
+    def feedback_callback(self, feedback_msg):
+        feedback = feedback_msg.feedback
+        self.get_logger().info(f'Received feedback: {feedback.status}')
+
+    def goal_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Goal rejected')
+            return
+
+        self.get_logger().info('Goal accepted')
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+
+    def get_result_callback(self, future):
+        result = future.result().result
+        self.get_logger().info(f'Result: {result.executed}')
+        self.sequence_completed = True  # Add flag to indicate completion
+        return result
+
 def main():
     rclpy.init()
-    minimal_client = MiniPupperBehaviorClientAsync()
+    action_client = MiniPupperBehaviorClient()
+    
+    # Wait for the action server to be ready
+    time.sleep(2)
 
-    for index, command in enumerate(minimal_client.move_commands):
-        # Send movemoment comment for the robot to dance
-        response = minimal_client.send_move_request(command)
-        if response.executed:
-            minimal_client.get_logger().info('Command from client:' + command)
+    for command in action_client.test_commands:
+        action_client.get_logger().info(f'Sending command: {command}')
+        action_client.send_move_request(command)
+        
+        # Wait for the action to complete
+        rclpy.spin_until_future_complete(action_client, action_client._send_goal_future)
+        
+        # Wait for the action to complete by spinning until sequence_completed flag is set
+        while not action_client.sequence_completed:
+            rclpy.spin_once(action_client, timeout_sec=0.1)
+        
+        action_client.get_logger().info(f'Command "{command}" completed!')
 
-    minimal_client.destroy_node()
+    action_client.get_logger().info('All sequences completed!')
+    action_client.destroy_node()
     rclpy.shutdown()
 if __name__ == '__main__':
     main()
