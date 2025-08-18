@@ -39,15 +39,15 @@ class MiniPupperDetectFace(Node):
         Callback function to handle detected faces.
         """
         if len(msg.detections) > 0:
-            self.get_logger().info('Face detected!')
             if self.face_detected == False:
+                self.get_logger().info('Face detected!')
                 self.send_media(self.face_reaction_img_path)
                 self.send_media(self.face_reaction_img_path)
                 self.send_media(self.face_reaction_img_path)
             self.face_detected = True
         else:
-            self.get_logger().info('No face detected.')
             if self.face_detected == True:
+                self.get_logger().info('No face detected.')
                 self.send_media(self.no_face_reaction_img_path)
                 self.send_media(self.no_face_reaction_img_path)
                 self.send_media(self.no_face_reaction_img_path)
