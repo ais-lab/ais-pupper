@@ -58,6 +58,7 @@ def generate_launch_description():
     has_imu = str(sensors_config['imu'])
     has_camera = str(sensors_config['camera'])
     lidar_port = ports_config['lidar']
+    has_display = str(ports_config.get('display', False))
 
     # Disable lidar for now, not supported with Stanford Controller yet.
     has_lidar = 'False'
@@ -96,7 +97,8 @@ def generate_launch_description():
             'has_lidar': has_lidar,
             'has_imu': has_imu,
             'has_camera': has_camera,
-            'lidar_port': lidar_port
+            'lidar_port': lidar_port,
+            'has_display': has_display
         }.items()
     )
 
