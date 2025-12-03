@@ -1,23 +1,20 @@
-import rclpy
-from rclpy.node import Node
-from .gait_controller import GaitController
-from .stance_controller import StanceController
-from .swing_controller import SwingController
-
-from .Kinematics import four_legs_inverse_kinematics
-from .Utilities import clipped_first_order_filter
-from .Utilities import convert_to_JTP_positions
-from .State import BehaviorState, State
-
-from .Config import Configuration
-
 import numpy as np
-from transforms3d.euler import euler2mat, quat2euler
-
-from sensor_msgs.msg import Imu
+import rclpy
+from champ_msgs.msg import ContactsStamped
+from mini_pupper_interfaces.msg import Command
+from rclpy.node import Node
+from sensor_msgs.msg import Imu, JointState
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from mini_pupper_interfaces.msg import Command
+from transforms3d.euler import euler2mat, quat2euler
+
+from .Config import Configuration
+from .gait_controller import GaitController
+from .Kinematics import four_legs_inverse_kinematics
+from .stance_controller import StanceController
+from .State import BehaviorState, State
+from .swing_controller import SwingController
+from .Utilities import clipped_first_order_filter, convert_to_JTP_positions
 
 
 class StanfordControllerNode(Node):
@@ -39,6 +36,14 @@ class StanfordControllerNode(Node):
         self.declare_parameter('publish_states', False)
         self.publish_states = self.get_parameter(
             'publish_states').get_parameter_value().bool_value
+        
+        self.declare_parameter('publish_foot_contacts', False)
+        self.publish_foot_contacts = self.get_parameter(
+            'publish_foot_contacts').get_parameter_value().bool_value
+        
+        self.declare_parameter('publish_joint_states', False)
+        self.publish_joint_states = self.get_parameter(
+            'publish_joint_states').get_parameter_value().bool_value
 
         # Configuration and initialization
         self.joint_names = [
@@ -98,6 +103,19 @@ class StanfordControllerNode(Node):
         )
         self.state_publisher = self.create_publisher(String, 'state_log', 10)
 
+        self.foot_contact_publisher = self.create_publisher(
+            ContactsStamped,
+            'foot_contacts',
+            10
+        )
+        
+        self.joint_states_publisher = self.create_publisher(
+            JointState,
+            'joint_states',
+            10
+        )
+
+
         self.state = State()
         self.quat_orientation = np.array([1, 0, 0, 0])
         # self.timer = self.create_timer(self.config.dt, self.control_loop)
@@ -109,6 +127,44 @@ class StanfordControllerNode(Node):
             msg.orientation.y,
             msg.orientation.z
         ])
+
+    def publish_foot_contact(self):
+        if not self.publish_foot_contacts:
+            return
+            
+        contacts_msg = ContactsStamped()
+        contacts_msg.header.stamp = self.get_clock().now().to_msg()
+        contacts_msg.header.frame_id = 'base_link'
+        
+        # Get contact states from gait controller
+        contact_states = self.gait_controller.contacts(self.state.ticks)
+        contacts_msg.contacts = [bool(contact) for contact in contact_states]
+        
+        self.foot_contact_publisher.publish(contacts_msg)
+
+    def publish_joint_state(self):
+        """Publish joint states similar to CHAMP controller."""
+        if not self.publish_joint_states:
+            return
+            
+        # Create JointState message (same as CHAMP)
+        joints_msg = JointState()
+        joints_msg.header.stamp = self.get_clock().now().to_msg()
+        joints_msg.header.frame_id = 'base_link'
+        
+        # Set joint names (already defined in your code)
+        joints_msg.name = self.joint_names
+        
+        # Convert 3x4 joint angles to 12x1 array (reuse your existing utility)
+        joint_positions = convert_to_JTP_positions(self.state.joint_angles)
+        joints_msg.position = joint_positions
+        
+        # Optional: Add velocities and efforts (zeros for now)
+        joints_msg.velocity = [0.0] * len(self.joint_names)
+        joints_msg.effort = [0.0] * len(self.joint_names)
+        
+        # Publish joint states
+        self.joint_states_publisher.publish(joints_msg)
 
     def dance_active(self, command):
         if command.dance_activate_event:
@@ -310,6 +366,10 @@ class StanfordControllerNode(Node):
             self.publish_state()
         if self.publish_joint_control:
             self.publish_joints_command()
+        if self.publish_foot_contacts:
+            self.publish_foot_contact()
+        if self.publish_joint_states:  # Add this line
+            self.publish_joint_state()
 
     def get_2d_foot_locations(self, command):
         location = command.legs_location

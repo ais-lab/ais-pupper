@@ -17,9 +17,9 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -43,11 +43,27 @@ def generate_launch_description():
         default_value='False',
         description='if publish states out'
     )
+    
+    publish_joint_states = LaunchConfiguration("publish_joint_states")
+    publish_joint_states_launch_arg = DeclareLaunchArgument(
+        name='publish_joint_states',
+        default_value='True',
+        description='if publish joint states out'
+    )
+    
+    publish_foot_contacts = LaunchConfiguration("publish_foot_contacts")
+    publish_foot_contacts_launch_arg = DeclareLaunchArgument(
+        name='publish_foot_contacts',
+        default_value='True',
+        description='if publish foot contacts out'
+    )
 
     return LaunchDescription([
         orientation_from_imu_launch_arg,
         publish_joint_control_launch_arg,
         publish_states_launch_arg,
+        publish_foot_contacts_launch_arg,
+        publish_joint_states_launch_arg,
         Node(
             package='stanford_controller',
             executable='stanford_controller_node',
@@ -56,7 +72,9 @@ def generate_launch_description():
             parameters=[{
                 'orientation_from_imu': orientation_from_imu,
                 'publish_joint_control': publish_joint_control,
-                'publish_states': publish_states
+                'publish_states': publish_states,
+                'publish_foot_contacts': publish_foot_contacts,
+                'publish_joint_states': publish_joint_states,
             }]
         )
     ])

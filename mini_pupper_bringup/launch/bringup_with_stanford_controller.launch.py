@@ -17,14 +17,17 @@
 # limitations under the License.
 
 import os
+
 import yaml
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.substitutions import FindPackageShare
 from launch.conditions import IfCondition
-from ament_index_python.packages import get_package_share_directory
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import (Command, LaunchConfiguration,
+                                  PathJoinSubstitution)
+from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 
 ROBOT_MODEL = os.getenv('ROBOT_MODEL', default='mini_pupper_2')
 
@@ -79,6 +82,7 @@ def generate_launch_description():
 
     description_launch_path = PathJoinSubstitution(
         [description_package, 'launch', 'mini_pupper_description.launch.py']
+        # [description_package, 'launch', 'stanford_visualisation.launch.py']
     )
     description_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(description_launch_path),
@@ -101,6 +105,10 @@ def generate_launch_description():
             'has_display': has_display
         }.items()
     )
+    
+    description_path = PathJoinSubstitution(
+        [description_package, 'urdf', ROBOT_MODEL, 'mini_pupper_description.urdf.xacro']
+    )
 
     stanford_controller_launch_path = PathJoinSubstitution(
         [FindPackageShare('stanford_controller'), 'stanford_controller.launch.py']
@@ -109,7 +117,67 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(stanford_controller_launch_path),
         launch_arguments={
             'orientation_from_imu': has_imu,
-            'publish_joint_control': 'True'
+            'publish_joint_control': 'True',
+            'description_path': description_path,
+        }.items()
+    )
+
+    joints_config_path = PathJoinSubstitution(
+        [description_package, 'config', 'champ', ROBOT_MODEL, 'joints.yaml']
+    )
+    links_config_path = PathJoinSubstitution(
+        [description_package, 'config', 'champ', ROBOT_MODEL, 'links.yaml']
+    )
+    gait_config_path = PathJoinSubstitution(
+        [description_package, 'config', 'champ', ROBOT_MODEL, 'gait.yaml']
+    )
+
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    use_sim_time_launch_arg = DeclareLaunchArgument(
+        name='use_sim_time',
+        default_value='False',
+        description='Use simulation (Gazebo) clock if true'
+    )
+    # quadruped_controller = Node(
+    #     package='champ_base',
+    #     executable='quadruped_controller_node',
+    #     output='screen',
+    #     parameters=[
+    #         {'use_sim_time': use_sim_time},
+    #         {'gazebo': use_sim_time},
+    #         {'publish_joint_states': True},
+    #         {'publish_joint_control': True},
+    #         {'publish_foot_contacts': True},
+    #         {'joint_controller_topic': 'joint_group_effort_controller/joint_trajectory'},
+    #         {'urdf': Command(['xacro ', description_path])},
+    #         joints_config_path,
+    #         links_config_path,
+    #         gait_config_path,
+    #     ],
+    #     remappings=[('/cmd_vel/smooth', '/cmd_vel')],
+    # )
+
+    state_estimator = Node(
+        package='champ_base',
+        executable='state_estimation_node',
+        output='screen',
+        parameters=[
+            {'use_sim_time': use_sim_time},
+            {'orientation_from_imu': True},
+            {'urdf': Command(['xacro ', description_path])},
+            joints_config_path,
+            links_config_path,
+            gait_config_path,
+        ],
+    )
+    
+    ekf_localization_launch_path = PathJoinSubstitution(
+        [bringup_package, 'launch', 'ekf_localization.launch.py']
+    )
+    ekf_localization_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(ekf_localization_launch_path),
+        launch_arguments={
+            'use_sim_time': use_sim_time
         }.items()
     )
 
@@ -119,4 +187,6 @@ def generate_launch_description():
         description_launch,
         hardware_interface_launch,
         stanford_controller_launch,
+        ekf_localization_launch,
+        state_estimator,
     ])
